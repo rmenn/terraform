@@ -14,6 +14,9 @@ import (
 	"github.com/mitchellh/goamz/rds"
 	"github.com/mitchellh/goamz/route53"
 	"github.com/mitchellh/goamz/s3"
+
+	awsGo "github.com/awslabs/aws-sdk-go/aws"
+	awsr53 "github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
 type Config struct {
@@ -29,6 +32,7 @@ type AWSClient struct {
 	s3conn          *s3.S3
 	rdsconn         *rds.Rds
 	route53         *route53.Route53
+	awsr53Conn      *awsr53.Route53
 }
 
 // Client configures and returns a fully initailized AWSClient
@@ -63,6 +67,10 @@ func (c *Config) Client() (interface{}, error) {
 		client.rdsconn = rds.New(auth, region)
 		log.Println("[INFO] Initializing Route53 connection")
 		client.route53 = route53.New(auth, region)
+
+		log.Println("[INFO] Initializing aws-go connection")
+		creds := awsGo.Creds(c.AccessKey, c.SecretKey, "")
+		client.awsr53Conn = awsr53.New(creds, region.Name, nil)
 	}
 
 	if len(errs) > 0 {
