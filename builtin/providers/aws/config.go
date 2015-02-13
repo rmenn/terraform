@@ -68,7 +68,7 @@ func (c *Config) Client() (interface{}, error) {
 		log.Println("[INFO] Initializing Route53 connection")
 		client.route53 = route53.New(auth, region)
 
-		log.Println("[INFO] Initializing aws-go connection")
+		log.Println("[INFO] Initializing aws-go Route53 connection")
 		creds := awsGo.Creds(c.AccessKey, c.SecretKey, "")
 		client.awsr53Conn = awsr53.New(creds, region.Name, nil)
 	}
