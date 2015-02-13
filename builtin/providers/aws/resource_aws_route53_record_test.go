@@ -104,9 +104,6 @@ func testAccCheckRoute53RecordExists(n string) resource.TestCheckFunc {
 }
 
 const testAccRoute53RecordConfig = `
-provider "aws" {
-    region = "us-east-1"
-}
 resource "aws_route53_zone" "main" {
 	name = "notexample.com"
 }
@@ -121,9 +118,6 @@ resource "aws_route53_record" "default" {
 `
 
 const testAccRoute53RecordConfigSuffix = `
-provider "aws" {
-    region = "us-east-1"
-}
 resource "aws_route53_zone" "main" {
 	name = "notexample.com"
 }

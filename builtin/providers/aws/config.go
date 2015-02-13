@@ -70,7 +70,11 @@ func (c *Config) Client() (interface{}, error) {
 
 		log.Println("[INFO] Initializing aws-go Route53 connection")
 		creds := awsGo.Creds(c.AccessKey, c.SecretKey, "")
-		client.awsr53Conn = awsr53.New(creds, region.Name, nil)
+
+		// aws-sdk-go uses v4 for signing requests, which requires all global
+		// endpoints to use 'us-east-1'.
+		// See http://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html
+		client.awsr53Conn = awsr53.New(creds, "us-east-1", nil)
 	}
 
 	if len(errs) > 0 {
