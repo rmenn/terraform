@@ -810,10 +810,14 @@ func (m schemaMap) diffString(
 		originalN = n
 		n = schema.StateFunc(n)
 	}
+	nraw := n
+	if nraw == nil {
+		nraw = schema.Type.Zero()
+	}
 	if err := mapstructure.WeakDecode(o, &os); err != nil {
 		return fmt.Errorf("%s: %s", k, err)
 	}
-	if err := mapstructure.WeakDecode(n, &ns); err != nil {
+	if err := mapstructure.WeakDecode(nraw, &ns); err != nil {
 		return fmt.Errorf("%s: %s", k, err)
 	}
 
