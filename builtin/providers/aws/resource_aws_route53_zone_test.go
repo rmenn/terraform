@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 
-	awsGo "github.com/awslabs/aws-sdk-go/aws"
-	awsr53 "github.com/awslabs/aws-sdk-go/gen/route53"
+	"github.com/awslabs/aws-sdk-go/aws"
+	"github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
 func TestAccRoute53Zone(t *testing.T) {
@@ -28,13 +28,13 @@ func TestAccRoute53Zone(t *testing.T) {
 }
 
 func testAccCheckRoute53ZoneDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*AWSClient).awsr53Conn
+	conn := testAccProvider.Meta().(*AWSClient).r53conn
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "aws_route53_zone" {
 			continue
 		}
 
-		_, err := conn.GetHostedZone(&awsr53.GetHostedZoneRequest{ID: awsGo.String(rs.Primary.ID)})
+		_, err := conn.GetHostedZone(&route53.GetHostedZoneRequest{ID: aws.String(rs.Primary.ID)})
 		if err == nil {
 			return fmt.Errorf("Hosted zone still exists")
 		}
@@ -53,8 +53,8 @@ func testAccCheckRoute53ZoneExists(n string) resource.TestCheckFunc {
 			return fmt.Errorf("No hosted zone ID is set")
 		}
 
-		conn := testAccProvider.Meta().(*AWSClient).awsr53Conn
-		_, err := conn.GetHostedZone(&awsr53.GetHostedZoneRequest{ID: awsGo.String(rs.Primary.ID)})
+		conn := testAccProvider.Meta().(*AWSClient).r53conn
+		_, err := conn.GetHostedZone(&route53.GetHostedZoneRequest{ID: aws.String(rs.Primary.ID)})
 		if err != nil {
 			return fmt.Errorf("Hosted zone err: %v", err)
 		}

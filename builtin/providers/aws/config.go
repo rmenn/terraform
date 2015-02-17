@@ -12,11 +12,10 @@ import (
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/mitchellh/goamz/elb"
 	"github.com/mitchellh/goamz/rds"
-	"github.com/mitchellh/goamz/route53"
 	"github.com/mitchellh/goamz/s3"
 
 	awsGo "github.com/awslabs/aws-sdk-go/aws"
-	awsr53 "github.com/awslabs/aws-sdk-go/gen/route53"
+	"github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
 type Config struct {
@@ -31,8 +30,7 @@ type AWSClient struct {
 	autoscalingconn *autoscaling.AutoScaling
 	s3conn          *s3.S3
 	rdsconn         *rds.Rds
-	route53         *route53.Route53
-	awsr53Conn      *awsr53.Route53
+	r53conn         *route53.Route53
 }
 
 // Client configures and returns a fully initailized AWSClient
@@ -66,15 +64,12 @@ func (c *Config) Client() (interface{}, error) {
 		log.Println("[INFO] Initializing RDS connection")
 		client.rdsconn = rds.New(auth, region)
 		log.Println("[INFO] Initializing Route53 connection")
-		client.route53 = route53.New(auth, region)
-
-		log.Println("[INFO] Initializing aws-go Route53 connection")
 		creds := awsGo.Creds(c.AccessKey, c.SecretKey, "")
 
 		// aws-sdk-go uses v4 for signing requests, which requires all global
 		// endpoints to use 'us-east-1'.
 		// See http://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html
-		client.awsr53Conn = awsr53.New(creds, "us-east-1", nil)
+		client.r53conn = route53.New(creds, "us-east-1", nil)
 	}
 
 	if len(errs) > 0 {
