@@ -274,14 +274,6 @@ func resourceAwsRoute53RecordBuildSet(d *schema.ResourceData) (*route53.Resource
 	return rec, nil
 }
 
-// CleanZoneID is used to remove the leading /hostedzone/
-func CleanZoneID(ID string) string {
-	if strings.HasPrefix(ID, "/hostedzone/") {
-		ID = strings.TrimPrefix(ID, "/hostedzone/")
-	}
-	return ID
-}
-
 func FQDN(name string) string {
 	n := len(name)
 	if n == 0 || name[n-1] == '.' {

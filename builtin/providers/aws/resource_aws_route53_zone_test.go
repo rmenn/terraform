@@ -11,6 +11,22 @@ import (
 	"github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
+func TestCleanZoneID(t *testing.T) {
+	cases := []struct {
+		Input, Output string
+	}{
+		{"/hostedzone/foo", "foo"},
+		{"/bar", "/bar"},
+	}
+
+	for _, tc := range cases {
+		actual := CleanZoneID(tc.Input)
+		if actual != tc.Output {
+			t.Fatalf("input: %s\noutput: %s", tc.Input, actual)
+		}
+	}
+}
+
 func TestAccRoute53Zone(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

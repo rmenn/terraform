@@ -118,3 +118,11 @@ func CleanChangeID(ID string) string {
 	}
 	return ID
 }
+
+// CleanZoneID is used to remove the leading /hostedzone/
+func CleanZoneID(ID string) string {
+	if strings.HasPrefix(ID, "/hostedzone/") {
+		ID = strings.TrimPrefix(ID, "/hostedzone/")
+	}
+	return ID
+}
