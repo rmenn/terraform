@@ -111,7 +111,7 @@ func TestValueType_Zero(t *testing.T) {
 		{TypeString, ""},
 		{TypeList, []interface{}{}},
 		{TypeMap, map[string]interface{}{}},
-		{TypeSet, nil},
+		{TypeSet, new(Set)},
 	}
 
 	for i, tc := range cases {
@@ -2029,6 +2029,69 @@ func TestSchemaMap_Diff(t *testing.T) {
 			Config: map[string]interface{}{},
 
 			Diff: nil,
+
+			Err: false,
+		},
+
+		// #51 - An empty set should show up in the diff
+		{
+			Schema: map[string]*Schema{
+				"instances": &Schema{
+					Type:     TypeSet,
+					Elem:     &Schema{Type: TypeString},
+					Optional: true,
+					ForceNew: true,
+					Set: func(v interface{}) int {
+						return len(v.(string))
+					},
+				},
+			},
+
+			State: nil,
+
+			Config: map[string]interface{}{},
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"instances.#": &terraform.ResourceAttrDiff{
+						Old:         "0",
+						New:         "0",
+						RequiresNew: true,
+					},
+				},
+			},
+
+			Err: false,
+		},
+
+		// #52 - Map with empty value
+		{
+			Schema: map[string]*Schema{
+				"vars": &Schema{
+					Type: TypeMap,
+				},
+			},
+
+			State: nil,
+
+			Config: map[string]interface{}{
+				"vars": map[string]interface{}{
+					"foo": "",
+				},
+			},
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"vars.#": &terraform.ResourceAttrDiff{
+						Old: "0",
+						New: "1",
+					},
+					"vars.foo": &terraform.ResourceAttrDiff{
+						Old: "",
+						New: "",
+					},
+				},
+			},
 
 			Err: false,
 		},

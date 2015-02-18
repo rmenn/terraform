@@ -661,10 +661,10 @@ func (m schemaMap) diffMap(
 
 	// Now we compare, preferring values from the config map
 	for k, v := range configMap {
-		old := stateMap[k]
+		old, ok := stateMap[k]
 		delete(stateMap, k)
 
-		if old == v && !all {
+		if old == v && ok && !all {
 			continue
 		}
 
@@ -702,6 +702,7 @@ func (m schemaMap) diffSet(
 		return nil
 	}
 
+	oRaw := o
 	if o == nil {
 		o = &Set{F: schema.Set}
 	}
@@ -750,7 +751,7 @@ func (m schemaMap) diffSet(
 
 	// If the counts are not the same, then record that diff
 	changed := oldLen != newLen
-	if changed || all {
+	if changed || all || oRaw == nil {
 		countSchema := &Schema{
 			Type:     TypeInt,
 			Computed: schema.Computed,
@@ -1081,5 +1082,31 @@ func (m schemaMap) validateType(
 		return m.validateMap(k, raw, schema, c)
 	default:
 		return m.validatePrimitive(k, raw, schema, c)
+	}
+}
+
+// Zero returns the zero value for a type.
+func (t ValueType) Zero() interface{} {
+	switch t {
+	case TypeInvalid:
+		return nil
+	case TypeBool:
+		return false
+	case TypeInt:
+		return 0
+	case TypeFloat:
+		return 0.0
+	case TypeString:
+		return ""
+	case TypeList:
+		return []interface{}{}
+	case TypeMap:
+		return map[string]interface{}{}
+	case TypeSet:
+		return new(Set)
+	case typeObject:
+		return map[string]interface{}{}
+	default:
+		panic(fmt.Sprintf("unknown type %s", t))
 	}
 }

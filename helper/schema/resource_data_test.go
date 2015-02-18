@@ -828,7 +828,7 @@ func TestResourceDataGetOk(t *testing.T) {
 
 			Key:   "availability_zone",
 			Value: "",
-			Ok:    true,
+			Ok:    false,
 		},
 
 		{
@@ -959,6 +959,32 @@ func TestResourceDataGetOk(t *testing.T) {
 
 			Key:   "ports.0",
 			Value: 0,
+			Ok:    false,
+		},
+
+		{
+			Schema: map[string]*Schema{
+				"ports": &Schema{
+					Type:     TypeSet,
+					Optional: true,
+					Elem:     &Schema{Type: TypeInt},
+					Set:      func(a interface{}) int { return a.(int) },
+				},
+			},
+
+			State: nil,
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"ports.#": &terraform.ResourceAttrDiff{
+						Old: "0",
+						New: "0",
+					},
+				},
+			},
+
+			Key:   "ports",
+			Value: []interface{}{},
 			Ok:    false,
 		},
 	}
@@ -1103,6 +1129,38 @@ func TestResourceDataHasChange(t *testing.T) {
 			Key: "ports",
 
 			Change: true,
+		},
+
+		// https://github.com/hashicorp/terraform/issues/927
+		{
+			Schema: map[string]*Schema{
+				"ports": &Schema{
+					Type:     TypeSet,
+					Optional: true,
+					Elem:     &Schema{Type: TypeInt},
+					Set:      func(a interface{}) int { return a.(int) },
+				},
+			},
+
+			State: &terraform.InstanceState{
+				Attributes: map[string]string{
+					"ports.#":  "1",
+					"ports.80": "80",
+				},
+			},
+
+			Diff: &terraform.InstanceDiff{
+				Attributes: map[string]*terraform.ResourceAttrDiff{
+					"tags.foo": &terraform.ResourceAttrDiff{
+						Old: "",
+						New: "bar",
+					},
+				},
+			},
+
+			Key: "ports",
+
+			Change: false,
 		},
 	}
 

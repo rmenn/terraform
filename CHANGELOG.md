@@ -41,6 +41,7 @@ BUG FIXES:
       lack of a value. [GH-952]
   * core: If a set type becomes empty, the state will be properly updated
       to remove it. [GH-952]
+  * core: Bare "splat" variables are not allowed in provisioners. [GH-636]
   * command/apply: Won't try to initialize modules in some cases when
       no arguments are given. [GH-780]
   * command/apply: Fix regression where user variables weren't asked [GH-736]
@@ -52,7 +53,12 @@ BUG FIXES:
   * provider/aws: Instance should ignore root EBS devices. [GH-877]
   * provider/aws: Fix `aws_db_instance` to not recreate each time. [GH-874]
   * provider/aws: ASG termination policies are synced with remote state. [GH-923]
+  * provider/aws: ASG launch configuration setting can now be updated in-place. [GH-904]
   * provider/aws: No read error when subnet is manually deleted. [GH-889]
+  * provider/aws: Tags with empty values (empty string) are properly
+      managed. [GH-968]
+  * provider/aws: Fix case where route table would delete its routes
+      on an unrelated change. [GH-990]
   * provider/google: Fix bug preventing instances with metadata from being
       created [GH-884].
 
@@ -62,6 +68,9 @@ PLUGIN CHANGES:
   * New `helper/schema` field for resources: `Exists` must point to a function
       to check for the existence of a resource. This is used to properly
       handle the case where the resource was manually deleted. [GH-766]
+  * There is a semantic change in `GetOk` where it will return `true` if
+      there is any value in the diff that is _non-zero_. Before, it would
+      return true only if there was a value in the diff.
 
 ## 0.3.6 (January 6, 2015)
 
