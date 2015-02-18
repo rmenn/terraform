@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
+
+	"github.com/awslabs/aws-sdk-go/aws"
+	awsGoEC2 "github.com/awslabs/aws-sdk-go/gen/ec2"
 )
 
 func resourceAwsKeyPair() *schema.Resource {
@@ -33,24 +36,32 @@ func resourceAwsKeyPair() *schema.Resource {
 }
 
 func resourceAwsKeyPairCreate(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEC2conn
 
 	keyName := d.Get("key_name").(string)
 	publicKey := d.Get("public_key").(string)
-	resp, err := ec2conn.ImportKeyPair(keyName, publicKey)
+	resp, err := ec2conn.ImportKeyPair(
+		&awsGoEC2.ImportKeyPairRequest{
+			KeyName:           aws.String(keyName),
+			PublicKeyMaterial: []byte(publicKey),
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("Error import KeyPair: %s", err)
 	}
 
-	d.SetId(resp.KeyName)
+	d.SetId(*resp.KeyName)
 
 	return nil
 }
 
 func resourceAwsKeyPairRead(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEC2conn
 
-	resp, err := ec2conn.KeyPairs([]string{d.Id()}, nil)
+	req:=&awsEC2conn.DescribeKeyPairsRequest{
+		KeyNames:[]string(d.Id()},
+	}
+	resp, err := ec2conn.DescribeKeyPairs(req, nil)
 	if err != nil {
 		return fmt.Errorf("Error retrieving KeyPair: %s", err)
 	}
@@ -67,7 +78,7 @@ func resourceAwsKeyPairRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceAwsKeyPairDelete(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEC2conn
 
 	_, err := ec2conn.DeleteKeyPair(d.Id())
 	return err

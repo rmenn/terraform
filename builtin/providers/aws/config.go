@@ -15,6 +15,7 @@ import (
 	"github.com/mitchellh/goamz/s3"
 
 	awsGo "github.com/awslabs/aws-sdk-go/aws"
+	awsGoEC2 "github.com/awslabs/aws-sdk-go/gen/ec2"
 	"github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
@@ -31,6 +32,8 @@ type AWSClient struct {
 	s3conn          *s3.S3
 	rdsconn         *rds.Rds
 	r53conn         *route53.Route53
+
+	awsEC2conn *awsGoEC2.EC2
 }
 
 // Client configures and returns a fully initailized AWSClient
@@ -70,6 +73,8 @@ func (c *Config) Client() (interface{}, error) {
 		// endpoints to use 'us-east-1'.
 		// See http://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html
 		client.r53conn = route53.New(creds, "us-east-1", nil)
+
+		client.awsEC2conn = awsGoEC2.New(creds, region.Name, nil)
 	}
 
 	if len(errs) > 0 {
