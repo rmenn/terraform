@@ -40,46 +40,46 @@ func resourceAwsKeyPairCreate(d *schema.ResourceData, meta interface{}) error {
 
 	keyName := d.Get("key_name").(string)
 	publicKey := d.Get("public_key").(string)
-	resp, err := ec2conn.ImportKeyPair(
-		&awsGoEC2.ImportKeyPairRequest{
-			KeyName:           aws.String(keyName),
-			PublicKeyMaterial: []byte(publicKey),
-		},
-	)
+	req := &awsGoEC2.ImportKeyPairRequest{
+		KeyName:           aws.String(keyName),
+		PublicKeyMaterial: []byte(publicKey),
+	}
+	resp, err := ec2conn.ImportKeyPair(req)
 	if err != nil {
 		return fmt.Errorf("Error import KeyPair: %s", err)
 	}
 
 	d.SetId(*resp.KeyName)
-
 	return nil
 }
 
 func resourceAwsKeyPairRead(d *schema.ResourceData, meta interface{}) error {
 	ec2conn := meta.(*AWSClient).awsEC2conn
 
-	req:=&awsEC2conn.DescribeKeyPairsRequest{
-		KeyNames:[]string(d.Id()},
+	req := &awsGoEC2.DescribeKeyPairsRequest{
+		KeyNames: []string{d.Id()},
 	}
-	resp, err := ec2conn.DescribeKeyPairs(req, nil)
+	resp, err := ec2conn.DescribeKeyPairs(req)
 	if err != nil {
 		return fmt.Errorf("Error retrieving KeyPair: %s", err)
 	}
 
-	for _, keyPair := range resp.Keys {
-		if keyPair.Name == d.Id() {
-			d.Set("key_name", keyPair.Name)
-			d.Set("fingerprint", keyPair.Fingerprint)
+	for _, keyPair := range resp.KeyPairs {
+		if *keyPair.KeyName == d.Id() {
+			d.Set("key_name", keyPair.KeyName)
+			d.Set("fingerprint", keyPair.KeyFingerprint)
 			return nil
 		}
 	}
 
-	return fmt.Errorf("Unable to find key pair within: %#v", resp.Keys)
+	return fmt.Errorf("Unable to find key pair within: %#v", resp.KeyPairs)
 }
 
 func resourceAwsKeyPairDelete(d *schema.ResourceData, meta interface{}) error {
 	ec2conn := meta.(*AWSClient).awsEC2conn
 
-	_, err := ec2conn.DeleteKeyPair(d.Id())
+	err := ec2conn.DeleteKeyPair(&awsGoEC2.DeleteKeyPairRequest{
+		KeyName: aws.String(d.Id()),
+	})
 	return err
 }
