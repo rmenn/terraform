@@ -11,16 +11,51 @@ import (
 	"github.com/awslabs/aws-sdk-go/gen/route53"
 )
 
+func TestCleanPrefix(t *testing.T) {
+	cases := []struct {
+		Input, Prefix, Output string
+	}{
+		{"/hostedzone/foo", "/hostedzone/", "foo"},
+		{"/change/foo", "/change/", "foo"},
+		{"/bar", "/test", "/bar"},
+	}
+
+	for _, tc := range cases {
+		actual := cleanPrefix(tc.Input, tc.Prefix)
+		if actual != tc.Output {
+			t.Fatalf("input: %s\noutput: %s", tc.Input, actual)
+		}
+	}
+}
+
 func TestCleanZoneID(t *testing.T) {
 	cases := []struct {
 		Input, Output string
 	}{
 		{"/hostedzone/foo", "foo"},
+		{"/change/foo", "/change/foo"},
 		{"/bar", "/bar"},
 	}
 
 	for _, tc := range cases {
-		actual := CleanZoneID(tc.Input)
+		actual := cleanZoneID(tc.Input)
+		if actual != tc.Output {
+			t.Fatalf("input: %s\noutput: %s", tc.Input, actual)
+		}
+	}
+}
+
+func TestCleanChangeID(t *testing.T) {
+	cases := []struct {
+		Input, Output string
+	}{
+		{"/hostedzone/foo", "/hostedzone/foo"},
+		{"/change/foo", "foo"},
+		{"/bar", "/bar"},
+	}
+
+	for _, tc := range cases {
+		actual := cleanChangeID(tc.Input)
 		if actual != tc.Output {
 			t.Fatalf("input: %s\noutput: %s", tc.Input, actual)
 		}

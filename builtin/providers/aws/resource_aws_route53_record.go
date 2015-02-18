@@ -96,7 +96,7 @@ func resourceAwsRoute53RecordCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	req := &route53.ChangeResourceRecordSetsRequest{
-		HostedZoneID: aws.String(CleanZoneID(*zoneRecord.HostedZone.ID)),
+		HostedZoneID: aws.String(cleanZoneID(*zoneRecord.HostedZone.ID)),
 		ChangeBatch:  changeBatch,
 	}
 
@@ -142,7 +142,7 @@ func resourceAwsRoute53RecordCreate(d *schema.ResourceData, meta interface{}) er
 		MinTimeout: 5 * time.Second,
 		Refresh: func() (result interface{}, state string, err error) {
 			changeRequest := &route53.GetChangeRequest{
-				ID: aws.String(CleanChangeID(*changeInfo.ID)),
+				ID: aws.String(cleanChangeID(*changeInfo.ID)),
 			}
 			return resourceAwsGoRoute53Wait(conn, changeRequest)
 		},
@@ -160,7 +160,7 @@ func resourceAwsRoute53RecordRead(d *schema.ResourceData, meta interface{}) erro
 
 	zone := d.Get("zone_id").(string)
 	lopts := &route53.ListResourceRecordSetsRequest{
-		HostedZoneID:    aws.String(CleanZoneID(zone)),
+		HostedZoneID:    aws.String(cleanZoneID(zone)),
 		StartRecordName: aws.String(d.Get("name").(string)),
 		StartRecordType: aws.String(d.Get("type").(string)),
 	}
@@ -220,7 +220,7 @@ func resourceAwsRoute53RecordDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	req := &route53.ChangeResourceRecordSetsRequest{
-		HostedZoneID: aws.String(CleanZoneID(zone)),
+		HostedZoneID: aws.String(cleanZoneID(zone)),
 		ChangeBatch:  changeBatch,
 	}
 

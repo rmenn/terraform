@@ -42,14 +42,15 @@ func resourceAwsRoute53ZoneCreate(d *schema.ResourceData, meta interface{}) erro
 		HostedZoneConfig: comment,
 		CallerReference:  aws.String(time.Now().Format(time.RFC3339Nano)),
 	}
-	log.Printf("[DEBUG] Creating Route53 hosted zone: %s", req.Name)
+
+	log.Printf("[DEBUG] Creating Route53 hosted zone: %s", *req.Name)
 	resp, err := r53.CreateHostedZone(req)
 	if err != nil {
 		return err
 	}
 
 	// Store the zone_id
-	zone := CleanZoneID(*resp.HostedZone.ID)
+	zone := cleanZoneID(*resp.HostedZone.ID)
 	d.Set("zone_id", zone)
 	d.SetId(zone)
 
@@ -62,7 +63,7 @@ func resourceAwsRoute53ZoneCreate(d *schema.ResourceData, meta interface{}) erro
 		MinTimeout: 2 * time.Second,
 		Refresh: func() (result interface{}, state string, err error) {
 			changeRequest := &route53.GetChangeRequest{
-				ID: aws.String(CleanChangeID(*resp.ChangeInfo.ID)),
+				ID: aws.String(cleanChangeID(*resp.ChangeInfo.ID)),
 			}
 			return resourceAwsGoRoute53Wait(r53, changeRequest)
 		},
@@ -111,18 +112,20 @@ func resourceAwsGoRoute53Wait(r53 *route53.Route53, ref *route53.GetChangeReques
 	return true, *status.ChangeInfo.Status, nil
 }
 
-// CleanChangeID is used to remove the leading /change/
-func CleanChangeID(ID string) string {
-	if strings.HasPrefix(ID, "/change/") {
-		ID = strings.TrimPrefix(ID, "/change/")
-	}
-	return ID
+// cleanChangeID is used to remove the leading /change/
+func cleanChangeID(ID string) string {
+	return cleanPrefix(ID, "/change/")
 }
 
-// CleanZoneID is used to remove the leading /hostedzone/
-func CleanZoneID(ID string) string {
-	if strings.HasPrefix(ID, "/hostedzone/") {
-		ID = strings.TrimPrefix(ID, "/hostedzone/")
+// cleanZoneID is used to remove the leading /hostedzone/
+func cleanZoneID(ID string) string {
+	return cleanPrefix(ID, "/hostedzone/")
+}
+
+// cleanPrefix removes a string prefix from an ID
+func cleanPrefix(ID, prefix string) string {
+	if strings.HasPrefix(ID, prefix) {
+		ID = strings.TrimPrefix(ID, prefix)
 	}
 	return ID
 }
