@@ -6,10 +6,11 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/aws-sdk-go/aws"
+	"github.com/hashicorp/aws-sdk-go/gen/ec2"
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/mitchellh/goamz/ec2"
 )
 
 func resourceAwsRouteTable() *schema.Resource {
@@ -61,11 +62,11 @@ func resourceAwsRouteTable() *schema.Resource {
 }
 
 func resourceAwsRouteTableCreate(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEc2conn
 
 	// Create the routing table
-	createOpts := &ec2.CreateRouteTable{
-		VpcId: d.Get("vpc_id").(string),
+	createOpts := &ec2.CreateRouteTableRequest{
+		VpcId: aws.String(d.Get("vpc_id").(string)),
 	}
 	log.Printf("[DEBUG] RouteTable create config: %#v", createOpts)
 
@@ -76,7 +77,7 @@ func resourceAwsRouteTableCreate(d *schema.ResourceData, meta interface{}) error
 
 	// Get the ID and store it
 	rt := &resp.RouteTable
-	d.SetId(rt.RouteTableId)
+	d.SetId(*rt.RouteTableID)
 	log.Printf("[INFO] Route Table ID: %s", d.Id())
 
 	// Wait for the route table to become available
@@ -99,7 +100,7 @@ func resourceAwsRouteTableCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceAwsRouteTableRead(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEc2conn
 
 	rtRaw, _, err := resourceAwsRouteTableStateRefreshFunc(ec2conn, d.Id())()
 	if err != nil {
@@ -110,27 +111,27 @@ func resourceAwsRouteTableRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	rt := rtRaw.(*ec2.RouteTable)
-	d.Set("vpc_id", rt.VpcId)
+	d.Set("vpc_id", *rt.VpcId)
 
 	// Create an empty schema.Set to hold all routes
 	route := &schema.Set{F: resourceAwsRouteTableHash}
 
 	// Loop through the routes and add them to the set
 	for _, r := range rt.Routes {
-		if r.GatewayId == "local" {
+		if *r.GatewayID == "local" {
 			continue
 		}
 
-		if r.Origin == "EnableVgwRoutePropagation" {
+		if *r.Origin == "EnableVgwRoutePropagation" {
 			continue
 		}
 
 		m := make(map[string]interface{})
-		m["cidr_block"] = r.DestinationCidrBlock
+		m["cidr_block"] = *r.DestinationCIDRBlock
 
-		m["gateway_id"] = r.GatewayId
-		m["instance_id"] = r.InstanceId
-		m["vpc_peering_connection_id"] = r.VpcPeeringConnectionId
+		m["gateway_id"] = *r.GatewayID
+		m["instance_id"] = *r.InstanceID
+		m["vpc_peering_connection_id"] = *r.VPCPeeringConnectionID
 
 		route.Add(m)
 	}
@@ -143,7 +144,7 @@ func resourceAwsRouteTableRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceAwsRouteTableUpdate(d *schema.ResourceData, meta interface{}) error {
-	ec2conn := meta.(*AWSClient).ec2conn
+	ec2conn := meta.(*AWSClient).awsEc2conn
 
 	// Check if the route set as a whole has changed
 	if d.HasChange("route") {

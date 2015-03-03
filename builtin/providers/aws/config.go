@@ -6,16 +6,17 @@ import (
 	"strings"
 	"unicode"
 
+	"launchpad.net/goamz/s3"
+
+	awsGo "github.com/hashicorp/aws-sdk-go/aws"
+	"github.com/hashicorp/aws-sdk-go/gen/autoscaling"
+	awsEc2 "github.com/hashicorp/aws-sdk-go/gen/ec2"
+	"github.com/hashicorp/aws-sdk-go/gen/route53"
 	"github.com/hashicorp/terraform/helper/multierror"
 	"github.com/mitchellh/goamz/aws"
 	"github.com/mitchellh/goamz/ec2"
 	"github.com/mitchellh/goamz/elb"
 	"github.com/mitchellh/goamz/rds"
-
-	awsGo "github.com/awslabs/aws-sdk-go/aws"
-	"github.com/awslabs/aws-sdk-go/gen/autoscaling"
-	"github.com/awslabs/aws-sdk-go/gen/route53"
-	"github.com/awslabs/aws-sdk-go/gen/s3"
 )
 
 type Config struct {
@@ -32,6 +33,7 @@ type AWSClient struct {
 	rdsconn         *rds.Rds
 	r53conn         *route53.Route53
 	region          string
+	awsEc2conn      *awsEc2.EC2
 }
 
 // Client configures and returns a fully initailized AWSClient
@@ -76,6 +78,9 @@ func (c *Config) Client() (interface{}, error) {
 		// See http://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html
 		log.Println("[INFO] Initializing Route53 connection")
 		client.r53conn = route53.New(creds, "us-east-1", nil)
+
+		log.Println("[INFO] Initializing AWS-GO EC2 Connection")
+		client.awsEc2conn = awsEc2.New(creds, c.Region, nil)
 	}
 
 	if len(errs) > 0 {
